@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp, ShieldAlert, Target, Zap, Activity, BarChart2, MessageSquare, Info } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp, ShieldAlert, Target, Zap, Activity, BarChart2, MessageSquare, Info, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { DecodingText } from "@/components/ui/decoding-text"
 
@@ -23,11 +24,12 @@ interface SignalCardProps {
         volume: string
         riskFactors: string
     }
-    onExecute: () => void
+    onExecute: (price: number) => void
+    isExecuting?: boolean
 }
 
 export function SignalCard({
-    symbol, name, type, entry, target, stopLoss, timeframe, risk, confidence, reasoning, onExecute
+    symbol, name, type, entry, target, stopLoss, timeframe, risk, confidence, reasoning, onExecute, isExecuting
 }: SignalCardProps) {
     const [expanded, setExpanded] = useState(false)
     const isBuy = type === "BUY"
@@ -43,7 +45,8 @@ export function SignalCard({
     useEffect(() => {
         const fetchPrice = async () => {
             try {
-                const res = await fetch(`http://localhost:8000/api/quote/${symbol.split('/')[0]}`)
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const res = await fetch(`${apiUrl}/api/quote/${symbol.split('/')[0]}`)
                 if (res.ok) {
                     const data = await res.json()
                     setLivePrice(data.price.toFixed(2))
@@ -78,7 +81,9 @@ export function SignalCard({
                             </div>
                             <div>
                                 <h3 className="font-bold text-lg text-white tracking-wide flex items-center gap-2">
-                                    {symbol}
+                                    <Link href={`/dashboard/stock/${encodeURIComponent(symbol)}`} className="hover:text-emerald-400 transition-colors">
+                                        {symbol}
+                                    </Link>
                                     {livePrice && (
                                         <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                                             ${livePrice}
@@ -120,15 +125,22 @@ export function SignalCard({
 
                     {/* Action Button */}
                     <Button
-                        onClick={onExecute}
+                        onClick={() => onExecute(livePrice ? parseFloat(livePrice) : parseFloat(entry.replace('₹', '').replace(',', '')))}
+                        disabled={isExecuting}
                         className={cn(
                             "w-full h-11 rounded-xl text-sm font-bold tracking-wide transition-all transform active:scale-95 group-hover:shadow-lg mb-3",
                             isBuy
                                 ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20"
-                                : "bg-rose-500 hover:bg-rose-400 text-white shadow-rose-500/20"
+                                : "bg-rose-500 hover:bg-rose-400 text-white shadow-rose-500/20",
+                            isExecuting && "opacity-50 cursor-not-allowed"
                         )}
                     >
-                        <Zap className="w-4 h-4 mr-2 fill-current" /> EXECUTE
+                        {isExecuting ? (
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Zap className="w-4 h-4 mr-2 fill-current" />
+                        )}
+                        {isExecuting ? "EXECUTING..." : "EXECUTE"}
                     </Button>
 
                     {/* Why This Trade Toggle */}

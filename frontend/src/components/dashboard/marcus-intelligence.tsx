@@ -17,7 +17,8 @@ export function MarcusIntelligence() {
         setLoading(true)
         setError(false)
         try {
-            const url = `http://localhost:8000/api/marcus/intelligence?agent=${currentAgent || 'marcus'}`
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const url = `${apiUrl}/api/marcus/intelligence?agent=${currentAgent || 'marcus'}`
             const res = await fetch(url)
             if (!res.ok) throw new Error("Failed to fetch")
             const data = await res.json()

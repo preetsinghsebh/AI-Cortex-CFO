@@ -20,7 +20,8 @@ export function SectorPerformanceChart() {
     useEffect(() => {
         const fetchSectors = async () => {
             try {
-                const res = await fetch("http://localhost:8000/api/market/sectors")
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                const res = await fetch(`${apiUrl}/api/market/sectors`)
                 const data = await res.json()
                 setSectors(data.sectors)
             } catch (error) {

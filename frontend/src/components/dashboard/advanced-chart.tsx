@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, memo } from 'react';
 
-function AdvancedChartWidget() {
+interface AdvancedChartProps {
+    symbol?: string
+}
+
+function AdvancedChartWidget({ symbol = "NSE:NIFTY" }: AdvancedChartProps) {
     const container = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -19,7 +23,7 @@ function AdvancedChartWidget() {
                 new window.TradingView.widget({
                     "width": "100%",
                     "height": "100%",
-                    "symbol": "NSE:NIFTY",
+                    "symbol": symbol,
                     "interval": "D",
                     "timezone": "Asia/Kolkata",
                     "theme": "dark",

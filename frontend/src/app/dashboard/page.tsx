@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TrendingUp, Briefcase, ShieldCheck, BrainCircuit } from "lucide-react"
+import { TrendingUp, Briefcase, ShieldCheck, BrainCircuit, Activity } from "lucide-react"
+import Link from "next/link"
 import { MarcusIntelligence } from "@/components/dashboard/marcus-intelligence"
 import { MarketPulse } from "@/components/dashboard/market-pulse"
 import { SignalCard } from "@/components/dashboard/signal-card"
@@ -16,11 +17,13 @@ export default function DashboardPage() {
     const [portfolio, setPortfolio] = useState<any>(null)
     const [signals, setSignals] = useState<any[]>([])
     const [loadingSignals, setLoadingSignals] = useState(true)
+    const [executingTrade, setExecutingTrade] = useState<string | null>(null)
 
     // Fetch Portfolio Data
     const fetchPortfolio = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/portfolio")
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/portfolio`)
             if (res.ok) {
                 const data = await res.json()
                 setPortfolio(data)
@@ -34,7 +37,8 @@ export default function DashboardPage() {
     const fetchSignals = async () => {
         setLoadingSignals(true)
         try {
-            const res = await fetch("http://localhost:8000/api/signals")
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/signals`)
             if (res.ok) {
                 const data = await res.json()
                 setSignals(data)
@@ -43,6 +47,42 @@ export default function DashboardPage() {
             console.error("Failed to fetch signals", error)
         } finally {
             setLoadingSignals(false)
+        }
+    }
+
+    // Execute Trade
+    const handleExecuteTrade = async (signal: any, price: number) => {
+        setExecutingTrade(signal.symbol)
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/trade/execute`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    symbol: signal.symbol.split('/')[0] + '.NS', // Map to .NS for backend
+                    type: signal.type,
+                    price: price,
+                    quantity: signal.type === "BUY" ? 10 : 5 // Default quantity for now
+                })
+            })
+
+            const data = await res.json()
+            if (res.ok) {
+                addMessage({
+                    role: "assistant",
+                    content: `Trade Executed Successfully! ✅\n\n**${signal.type}** ${signal.symbol} @ ₹${price}\nTransaction ID: ${data.trade.id}`
+                })
+                fetchPortfolio() // Refresh portfolio
+            } else {
+                addMessage({
+                    role: "assistant",
+                    content: `Trade Failed: ${data.detail || "Unknown error"}`
+                })
+            }
+        } catch (error) {
+            console.error("Trade execution failed", error)
+        } finally {
+            setExecutingTrade(null)
         }
     }
 
@@ -85,12 +125,8 @@ export default function DashboardPage() {
                                 <SignalCard
                                     key={idx}
                                     {...signal}
-                                    onExecute={() => {
-                                        addMessage({
-                                            role: "user",
-                                            content: `Execute trade: ${signal.type} ${signal.symbol} at ${signal.entry}`
-                                        })
-                                    }}
+                                    onExecute={(price: number) => handleExecuteTrade(signal, price)}
+                                    isExecuting={executingTrade === signal.symbol}
                                 />
                             ))}
                             {signals.length === 0 && !loadingSignals && (
@@ -125,11 +161,11 @@ export default function DashboardPage() {
                         <div className="space-y-3">
                             <div className="flex justify-between text-sm border-b border-white/5 pb-2">
                                 <span className="text-zinc-400">Cash Available</span>
-                                <span className="text-white font-mono">₹4,50,000</span>
+                                <span className="text-white font-mono">₹{portfolio ? portfolio.balance.toLocaleString("en-IN") : "..."}</span>
                             </div>
                             <div className="flex justify-between text-sm border-b border-white/5 pb-2">
-                                <span className="text-zinc-400">Equity Exposure</span>
-                                <span className="text-white font-mono">65%</span>
+                                <span className="text-zinc-400">Holdings Count</span>
+                                <span className="text-white font-mono">{portfolio ? Object.keys(portfolio.holdings).length : "..."}</span>
                             </div>
                             <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg">
                                 <p className="text-rose-400 text-xs font-bold flex items-center gap-2">
@@ -137,6 +173,29 @@ export default function DashboardPage() {
                                 </p>
                                 <p className="text-zinc-300 text-xs mt-1">Overweight in Banking (40%). Rebalance suggested.</p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* ACTIVE HOLDINGS */}
+                    <div className="glass-card rounded-3xl p-6">
+                        <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Activity size={14} /> Active Holdings
+                        </h3>
+                        <div className="space-y-3">
+                            {portfolio && Object.entries(portfolio.holdings).map(([symbol, qty]: [string, any]) => (
+                                <div key={symbol} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <div>
+                                        <p className="text-sm font-bold text-white">{symbol.replace('.NS', '')}</p>
+                                        <p className="text-[10px] text-zinc-500">{qty} Shares</p>
+                                    </div>
+                                    <Link href={`/dashboard/stock/${encodeURIComponent(symbol.replace('.NS', ''))}`} className="text-xs text-emerald-400 hover:underline">
+                                        Analyze
+                                    </Link>
+                                </div>
+                            ))}
+                            {(!portfolio || Object.keys(portfolio.holdings).length === 0) && (
+                                <p className="text-xs text-zinc-500 italic text-center py-4">No active holdings.</p>
+                            )}
                         </div>
                     </div>
 

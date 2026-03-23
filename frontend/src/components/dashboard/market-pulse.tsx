@@ -22,7 +22,8 @@ export function MarketPulse() {
 
     const fetchData = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/market/pulse")
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${apiUrl}/api/market/pulse`)
             if (res.ok) {
                 const json = await res.json()
                 setData(json)
