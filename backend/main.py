@@ -14,7 +14,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://ai-cortex-cfo-frontend.vercel.app"
+        "https://ai-cortex-cfo-frontend.vercel.app",
+        "https://cortex-cfo.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
