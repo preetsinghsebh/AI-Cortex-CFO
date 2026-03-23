@@ -1,6 +1,6 @@
-# 🧠 AI CFO Cortex
+# 🧠 CortexCFO
 
-AI CFO Cortex is a state-of-the-art AI-powered financial co-pilot. It combines a dynamic, sleek frontend dashboard with a powerful Python-based backend to provide real-time market insights, intelligent portfolio management, data science forecasting, and an autonomous AI companion (Marcus Intelligence).
+CortexCFO is a state-of-the-art AI-powered financial co-pilot. It combines a dynamic, sleek frontend dashboard with a powerful Python-based backend to provide real-time market insights, intelligent portfolio management, data science forecasting, and an autonomous AI companion (Marcus Intelligence).
 
 ## 🚀 Key Features
 
