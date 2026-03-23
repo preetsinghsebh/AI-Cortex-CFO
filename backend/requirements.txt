@@ -11,3 +11,5 @@ cryptography
 python-dotenv
 requests
 feedparser
+aiohttp
+beautifulsoup4
