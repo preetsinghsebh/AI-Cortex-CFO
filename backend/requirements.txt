@@ -10,3 +10,4 @@ pmdarima
 cryptography
 python-dotenv
 requests
+feedparser
